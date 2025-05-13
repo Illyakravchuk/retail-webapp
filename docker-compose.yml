@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: retail
+      POSTGRES_PASSWORD: retail
+      POSTGRES_DB: retail
+    volumes:
+      - ./dbdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgres://retail:retail@db:5432/retail
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
