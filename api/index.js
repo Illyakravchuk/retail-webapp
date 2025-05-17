@@ -1,6 +1,9 @@
 import 'dotenv/config';
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
+import { generateToken } from './utils/jwt.js';
+import { authenticate } from './middleware/auth.js';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -67,6 +70,39 @@ app.post('/sales', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Failed to create sale' });
   }
+});
+
+// Реєстрація нового користувача
+app.post('/register', async (req, res) => {
+  const { email, password } = req.body;
+  const hashed = await bcrypt.hash(password, 10);
+
+  try {
+    const user = await prisma.user.create({
+      data: { email, password: hashed }
+    });
+    res.json({ message: 'User created' });
+  } catch {
+    res.status(400).json({ error: 'Email already exists' });
+  }
+});
+
+// Вхід користувача та видача JWT
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  const user = await prisma.user.findUnique({ where: { email } });
+
+  if (!user || !(await bcrypt.compare(password, user.password))) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+
+  const token = generateToken(user);
+  res.json({ token });
+});
+
+// Захищений маршрут
+app.get('/profile', authenticate, async (req, res) => {
+  res.json({ user: req.user });
 });
 
 app.listen(PORT, () => console.log(`API listening on ${PORT}`));
