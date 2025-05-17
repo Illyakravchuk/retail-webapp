@@ -28,14 +28,50 @@ app.get('/stores', async (_req, res) => {
   }
 });
 
-// Створити магазин
-app.post('/stores', async (req, res) => {
+// Отримати магазин за ID
+app.get('/stores/:id', authenticate, async (req, res) => {
   try {
-    const { name, location } = req.body;
-    const store = await prisma.store.create({ data: { name, location } });
+    const store = await prisma.store.findUnique({
+      where: { id: Number(req.params.id) },
+      include: { employees: true, products: true, sales: true }
+    });
+    if (!store) return res.status(404).json({ error: 'Store not found' });
+    res.json(store);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch store' });
+  }
+});
+
+// Створити магазин
+app.post('/stores', authenticate, async (req, res) => {
+  try {
+    const store = await prisma.store.create({ data: req.body });
     res.status(201).json(store);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to create store' });
+    res.status(400).json({ error: 'Failed to create store' });
+  }
+});
+
+// Оновити магазин
+app.put('/stores/:id', authenticate, async (req, res) => {
+  try {
+    const updated = await prisma.store.update({
+      where: { id: Number(req.params.id) },
+      data: req.body
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ error: 'Failed to update store' });
+  }
+});
+
+// Видалити магазин
+app.delete('/stores/:id', authenticate, async (req, res) => {
+  try {
+    await prisma.store.delete({ where: { id: Number(req.params.id) } });
+    res.json({ message: 'Store deleted' });
+  } catch (err) {
+    res.status(400).json({ error: 'Failed to delete store' });
   }
 });
 
