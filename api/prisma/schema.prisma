@@ -1,0 +1,48 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id        Int      @id @default(autoincrement())
+  name      String
+  location  String
+  employees Employee[]
+  products  Product[]
+  sales     Sale[]
+}
+
+model Employee {
+  id       Int    @id @default(autoincrement())
+  name     String
+  role     String
+  storeId  Int
+  store    Store  @relation(fields: [storeId], references: [id])
+}
+
+model Product {
+  id          Int     @id @default(autoincrement())
+  name        String
+  price       Float
+  stock       Int
+  storeId     Int
+  store       Store   @relation(fields: [storeId], references: [id])
+  sales       Sale[]
+}
+
+model Sale {
+  id         Int      @id @default(autoincrement())
+  productId  Int
+  storeId    Int
+  quantity   Int
+  total      Float
+  date       DateTime @default(now())
+
+  product    Product  @relation(fields: [productId], references: [id])
+  store      Store    @relation(fields: [storeId], references: [id])
+}
