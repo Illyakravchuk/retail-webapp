@@ -75,36 +75,165 @@ app.delete('/stores/:id', authenticate, async (req, res) => {
   }
 });
 
-// Створити працівника
-app.post('/employees', async (req, res) => {
+// Всі працівники
+app.get('/employees', authenticate, async (_req, res) => {
   try {
-    const { name, role, storeId } = req.body;
-    const employee = await prisma.employee.create({ data: { name, role, storeId } });
-    res.status(201).json(employee);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to create employee' });
+    const list = await prisma.employee.findMany();
+    res.json(list);
+  } catch {
+    res.status(500).json({ error: 'Failed to fetch employees' });
   }
 });
 
-// Створити товар
-app.post('/products', async (req, res) => {
+// Один працівник
+app.get('/employees/:id', authenticate, async (req, res) => {
   try {
-    const { name, price, stock, storeId } = req.body;
-    const product = await prisma.product.create({ data: { name, price, stock, storeId } });
-    res.status(201).json(product);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to create product' });
+    const emp = await prisma.employee.findUnique({ where: { id: Number(req.params.id) }});
+    if (!emp) return res.status(404).json({ error: 'Employee not found' });
+    res.json(emp);
+  } catch {
+    res.status(500).json({ error: 'Failed to fetch employee' });
+  }
+});
+
+// Створити працівника
+app.post('/employees', authenticate, async (req, res) => {
+  try {
+    const emp = await prisma.employee.create({ data: req.body });
+    res.status(201).json(emp);
+  } catch {
+    res.status(400).json({ error: 'Failed to create employee' });
+  }
+});
+
+// Оновити працівника
+app.put('/employees/:id', authenticate, async (req, res) => {
+  try {
+    const emp = await prisma.employee.update({
+      where: { id: Number(req.params.id) },
+      data:  req.body
+    });
+    res.json(emp);
+  } catch {
+    res.status(400).json({ error: 'Failed to update employee' });
+  }
+});
+
+// Видалити працівника
+app.delete('/employees/:id', authenticate, async (req, res) => {
+  try {
+    await prisma.employee.delete({ where: { id: Number(req.params.id) }});
+    res.json({ message: 'Employee deleted' });
+  } catch {
+    res.status(400).json({ error: 'Failed to delete employee' });
+  }
+});
+
+// Всі продукти
+app.get('/products', authenticate, async (_req, res) => {
+  try {
+    const list = await prisma.product.findMany();
+    res.json(list);
+  } catch {
+    res.status(500).json({ error: 'Failed to fetch products' });
+  }
+});
+
+// Один продукт
+app.get('/products/:id', authenticate, async (req, res) => {
+  try {
+    const prod = await prisma.product.findUnique({ where: { id: Number(req.params.id) }});
+    if (!prod) return res.status(404).json({ error: 'Product not found' });
+    res.json(prod);
+  } catch {
+    res.status(500).json({ error: 'Failed to fetch product' });
+  }
+});
+
+// Створити продукт
+app.post('/products', authenticate, async (req, res) => {
+  try {
+    const prod = await prisma.product.create({ data: req.body });
+    res.status(201).json(prod);
+  } catch {
+    res.status(400).json({ error: 'Failed to create product' });
+  }
+});
+
+// Оновити продукт
+app.put('/products/:id', authenticate, async (req, res) => {
+  try {
+    const prod = await prisma.product.update({
+      where: { id: Number(req.params.id) },
+      data:  req.body
+    });
+    res.json(prod);
+  } catch {
+    res.status(400).json({ error: 'Failed to update product' });
+  }
+});
+
+// Видалити продукт
+app.delete('/products/:id', authenticate, async (req, res) => {
+  try {
+    await prisma.product.delete({ where: { id: Number(req.params.id) }});
+    res.json({ message: 'Product deleted' });
+  } catch {
+    res.status(400).json({ error: 'Failed to delete product' });
+  }
+});
+
+// Всі продажі
+app.get('/sales', authenticate, async (_req, res) => {
+  try {
+    const list = await prisma.sale.findMany();
+    res.json(list);
+  } catch {
+    res.status(500).json({ error: 'Failed to fetch sales' });
+  }
+});
+
+// Один продаж
+app.get('/sales/:id', authenticate, async (req, res) => {
+  try {
+    const sale = await prisma.sale.findUnique({ where: { id: Number(req.params.id) }});
+    if (!sale) return res.status(404).json({ error: 'Sale not found' });
+    res.json(sale);
+  } catch {
+    res.status(500).json({ error: 'Failed to fetch sale' });
   }
 });
 
 // Створити продаж
-app.post('/sales', async (req, res) => {
+app.post('/sales', authenticate, async (req, res) => {
   try {
-    const { productId, storeId, quantity, total } = req.body;
-    const sale = await prisma.sale.create({ data: { productId, storeId, quantity, total } });
+    const sale = await prisma.sale.create({ data: req.body });
     res.status(201).json(sale);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to create sale' });
+  } catch {
+    res.status(400).json({ error: 'Failed to create sale' });
+  }
+});
+
+// Оновити продаж
+app.put('/sales/:id', authenticate, async (req, res) => {
+  try {
+    const sale = await prisma.sale.update({
+      where: { id: Number(req.params.id) },
+      data:  req.body
+    });
+    res.json(sale);
+  } catch {
+    res.status(400).json({ error: 'Failed to update sale' });
+  }
+});
+
+// Видалити продаж
+app.delete('/sales/:id', authenticate, async (req, res) => {
+  try {
+    await prisma.sale.delete({ where: { id: Number(req.params.id) }});
+    res.json({ message: 'Sale deleted' });
+  } catch {
+    res.status(400).json({ error: 'Failed to delete sale' });
   }
 });
 
@@ -126,14 +255,15 @@ app.post('/register', async (req, res) => {
 // Вхід користувача та видача JWT
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
-  const user = await prisma.user.findUnique({ where: { email } });
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user || !(await bcrypt.compare(password, user.password)))
+      return res.status(401).json({ error: 'Invalid credentials' });
 
-  if (!user || !(await bcrypt.compare(password, user.password))) {
-    return res.status(401).json({ error: 'Invalid credentials' });
+    res.json({ token: generateToken(user) });
+  } catch {
+    res.status(500).json({ error: 'Login failed' });
   }
-
-  const token = generateToken(user);
-  res.json({ token });
 });
 
 // Захищений маршрут
