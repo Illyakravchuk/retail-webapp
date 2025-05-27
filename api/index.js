@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { generateToken } from './utils/jwt.js';
 import { authenticate } from './middleware/auth.js';
+import { authorizeRoles } from './middleware/roles.js';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -17,7 +18,7 @@ app.get('/', (_req, res) => {
 });
 
 // Отримати всі магазини
-app.get('/stores', async (_req, res) => {
+app.get('/stores', authenticate, authorizeRoles(['admin']), async (_req, res) => {
   try {
     const stores = await prisma.store.findMany({
       include: { employees: true, products: true, sales: true }
@@ -29,7 +30,7 @@ app.get('/stores', async (_req, res) => {
 });
 
 // Отримати магазин за ID
-app.get('/stores/:id', authenticate, async (req, res) => {
+app.get('/stores/:id', authenticate, authorizeRoles(['admin']), async (req, res) => {
   try {
     const store = await prisma.store.findUnique({
       where: { id: Number(req.params.id) },
@@ -43,7 +44,7 @@ app.get('/stores/:id', authenticate, async (req, res) => {
 });
 
 // Створити магазин
-app.post('/stores', authenticate, async (req, res) => {
+app.post('/stores', authenticate, authorizeRoles(['admin']), async (req, res) => {
   try {
     const store = await prisma.store.create({ data: req.body });
     res.status(201).json(store);
@@ -53,7 +54,7 @@ app.post('/stores', authenticate, async (req, res) => {
 });
 
 // Оновити магазин
-app.put('/stores/:id', authenticate, async (req, res) => {
+app.put('/stores/:id', authenticate, authorizeRoles(['admin']), async (req, res) => {
   try {
     const updated = await prisma.store.update({
       where: { id: Number(req.params.id) },
@@ -66,7 +67,7 @@ app.put('/stores/:id', authenticate, async (req, res) => {
 });
 
 // Видалити магазин
-app.delete('/stores/:id', authenticate, async (req, res) => {
+app.delete('/stores/:id', authenticate, authorizeRoles(['admin']), async (req, res) => {
   try {
     await prisma.store.delete({ where: { id: Number(req.params.id) } });
     res.json({ message: 'Store deleted' });
@@ -76,7 +77,7 @@ app.delete('/stores/:id', authenticate, async (req, res) => {
 });
 
 // Всі працівники
-app.get('/employees', authenticate, async (_req, res) => {
+app.get('/employees', authenticate, authorizeRoles(['admin']), async (_req, res) => {
   try {
     const list = await prisma.employee.findMany();
     res.json(list);
@@ -86,7 +87,7 @@ app.get('/employees', authenticate, async (_req, res) => {
 });
 
 // Один працівник
-app.get('/employees/:id', authenticate, async (req, res) => {
+app.get('/employees/:id', authenticate, authorizeRoles(['admin']), async (req, res) => {
   try {
     const emp = await prisma.employee.findUnique({ where: { id: Number(req.params.id) }});
     if (!emp) return res.status(404).json({ error: 'Employee not found' });
@@ -97,7 +98,7 @@ app.get('/employees/:id', authenticate, async (req, res) => {
 });
 
 // Створити працівника
-app.post('/employees', authenticate, async (req, res) => {
+app.post('/employees', authenticate, authorizeRoles(['admin']), async (req, res) => {
   try {
     const emp = await prisma.employee.create({ data: req.body });
     res.status(201).json(emp);
@@ -107,7 +108,7 @@ app.post('/employees', authenticate, async (req, res) => {
 });
 
 // Оновити працівника
-app.put('/employees/:id', authenticate, async (req, res) => {
+app.put('/employees/:id', authenticate, authorizeRoles(['admin']), async (req, res) => {
   try {
     const emp = await prisma.employee.update({
       where: { id: Number(req.params.id) },
@@ -120,7 +121,7 @@ app.put('/employees/:id', authenticate, async (req, res) => {
 });
 
 // Видалити працівника
-app.delete('/employees/:id', authenticate, async (req, res) => {
+app.delete('/employees/:id', authenticate, authorizeRoles(['admin']), async (req, res) => {
   try {
     await prisma.employee.delete({ where: { id: Number(req.params.id) }});
     res.json({ message: 'Employee deleted' });
@@ -151,7 +152,7 @@ app.get('/products/:id', authenticate, async (req, res) => {
 });
 
 // Створити продукт
-app.post('/products', authenticate, async (req, res) => {
+app.post('/products', authenticate, authorizeRoles(['admin', 'cashier']), async (req, res) => {
   try {
     const prod = await prisma.product.create({ data: req.body });
     res.status(201).json(prod);
@@ -161,7 +162,7 @@ app.post('/products', authenticate, async (req, res) => {
 });
 
 // Оновити продукт
-app.put('/products/:id', authenticate, async (req, res) => {
+app.put('/products/:id', authenticate, authorizeRoles(['admin', 'cashier']), async (req, res) => {
   try {
     const prod = await prisma.product.update({
       where: { id: Number(req.params.id) },
@@ -174,7 +175,7 @@ app.put('/products/:id', authenticate, async (req, res) => {
 });
 
 // Видалити продукт
-app.delete('/products/:id', authenticate, async (req, res) => {
+app.delete('/products/:id', authenticate, authorizeRoles(['admin', 'cashier']), async (req, res) => {
   try {
     await prisma.product.delete({ where: { id: Number(req.params.id) }});
     res.json({ message: 'Product deleted' });
@@ -184,7 +185,7 @@ app.delete('/products/:id', authenticate, async (req, res) => {
 });
 
 // Всі продажі
-app.get('/sales', authenticate, async (_req, res) => {
+app.get('/sales', authenticate, authorizeRoles(['admin']), async (_req, res) => {
   try {
     const list = await prisma.sale.findMany();
     res.json(list);
@@ -194,7 +195,7 @@ app.get('/sales', authenticate, async (_req, res) => {
 });
 
 // Один продаж
-app.get('/sales/:id', authenticate, async (req, res) => {
+app.get('/sales/:id', authenticate, authorizeRoles(['admin']), async (req, res) => {
   try {
     const sale = await prisma.sale.findUnique({ where: { id: Number(req.params.id) }});
     if (!sale) return res.status(404).json({ error: 'Sale not found' });
@@ -205,7 +206,7 @@ app.get('/sales/:id', authenticate, async (req, res) => {
 });
 
 // Створити продаж
-app.post('/sales', authenticate, async (req, res) => {
+app.post('/sales', authenticate, authorizeRoles(['admin']), async (req, res) => {
   try {
     const sale = await prisma.sale.create({ data: req.body });
     res.status(201).json(sale);
@@ -215,7 +216,7 @@ app.post('/sales', authenticate, async (req, res) => {
 });
 
 // Оновити продаж
-app.put('/sales/:id', authenticate, async (req, res) => {
+app.put('/sales/:id', authenticate, authorizeRoles(['admin']), async (req, res) => {
   try {
     const sale = await prisma.sale.update({
       where: { id: Number(req.params.id) },
@@ -228,7 +229,7 @@ app.put('/sales/:id', authenticate, async (req, res) => {
 });
 
 // Видалити продаж
-app.delete('/sales/:id', authenticate, async (req, res) => {
+app.delete('/sales/:id', authenticate, authorizeRoles(['admin']), async (req, res) => {
   try {
     await prisma.sale.delete({ where: { id: Number(req.params.id) }});
     res.json({ message: 'Sale deleted' });
@@ -239,13 +240,11 @@ app.delete('/sales/:id', authenticate, async (req, res) => {
 
 // Реєстрація нового користувача
 app.post('/register', async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, role = 'user' } = req.body;   
   const hashed = await bcrypt.hash(password, 10);
 
   try {
-    const user = await prisma.user.create({
-      data: { email, password: hashed }
-    });
+    await prisma.user.create({ data: { email, password: hashed, role } });
     res.json({ message: 'User created' });
   } catch {
     res.status(400).json({ error: 'Email already exists' });
