@@ -10,76 +10,86 @@ import AddIcon    from "@mui/icons-material/Add";
 import EditIcon   from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-export default function EmployeeCard({ rows, setRows, auth }) {
+export default function EmployeeCard({ rows, setRows, auth, storeId }) {
   const [openForm, setOpenForm] = useState(false);
-  const [openDel , setOpenDel ] = useState(false);
-  const [cur, setCur] = useState({ id:null, name:"", role:"", storeId:"" });
+  const [openDel, setOpenDel] = useState(false);
+  const [cur, setCur] = useState({ id: null, name: "", role: "", storeId: "" });
 
+  const query = { params: { storeId }, ...auth };
   const refetch = async () => {
-    const { data } = await axios.get("http://localhost:3000/employees", auth);
+    const { data } = await axios.get("http://localhost:3000/employees", query);
     setRows(data);
   };
-  const reset = () => setCur({ id:null, name:"", role:"", storeId:"" });
+
+  const reset = () => setCur({ id: null, name: "", role: "", storeId: "" });
 
   const handleSave = async () => {
-    const body = { name:cur.name, role:cur.role, storeId:Number(cur.storeId) };
-
+    const body = {
+      name: cur.name,
+      role: cur.role,
+      storeId: Number(cur.storeId)
+    };
     if (cur.id === null) {
       await axios.post("http://localhost:3000/employees", body, auth);
     } else {
       await axios.put(`http://localhost:3000/employees/${cur.id}`, body, auth);
     }
     await refetch();
-    setOpenForm(false); reset();
+    setOpenForm(false);
+    reset();
   };
 
-  /* DELETE */
   const handleDelete = async () => {
     await axios.delete(`http://localhost:3000/employees/${cur.id}`, auth);
     await refetch();
-    setOpenDel(false); reset();
+    setOpenDel(false);
+    reset();
   };
 
-  /* колонки DataGrid */
+  // Колонки для DataGrid
   const columns = [
-    { field:"id",       headerName:"ID",        width:70  },
-    { field:"name",     headerName:"Імʼя",      flex:1    },
-    { field:"role",     headerName:"Роль",      width:120 },
-    { field:"storeId",  headerName:"ID магаз.", width:110 },
+    { field: "id",       headerName: "ID",        width: 70 },
+    { field: "name",     headerName: "Імʼя",      flex: 1 },
+    { field: "role",     headerName: "Роль",      width: 120 },
+    { field: "storeId",  headerName: "ID магаз.", width: 110 },
     {
-      field:"actions",
-      headerName:"",
-      width:110,
-      renderCell:({ row })=>(
+      field: "actions",
+      headerName: "",
+      width: 110,
+      renderCell: ({ row }) => (
         <>
-          <IconButton size="small" onClick={()=>{ setCur(row); setOpenForm(true); }}>
-            <EditIcon fontSize="small"/>
+          <IconButton size="small" onClick={() => { setCur(row); setOpenForm(true); }}>
+            <EditIcon fontSize="small" />
           </IconButton>
           <IconButton size="small" color="error"
-            onClick={()=>{ setCur(row); setOpenDel(true); }}>
-            <DeleteIcon fontSize="small"/>
+            onClick={() => { setCur(row); setOpenDel(true); }}>
+            <DeleteIcon fontSize="small" />
           </IconButton>
         </>
       )
     }
   ];
 
+  // UI
   return (
-    <Card sx={{ height: 420,                
+    <Card sx={{
+      height: 420,
       display: "flex",
       flexDirection: "column",
       boxShadow: 3
-       }}>
+    }}>
       <CardHeader
         title="Працівники"
         action={
-          <IconButton onClick={()=>{ reset(); setOpenForm(true); }} sx={{ color:"#fff" }}>
-            <AddIcon/>
+          <IconButton
+            onClick={() => { reset(); setOpenForm(true); }}
+            sx={{ color: "#fff" }}>
+            <AddIcon />
           </IconButton>
         }
-        sx={{ bgcolor:"info.main", color:"#fff" }}
+        sx={{ bgcolor: "#9c27b0", color: "#fff" }}
       />
-      <Divider/>
+      <Divider />
 
       <Box sx={{ flexGrow: 1 }}>
         <DataGrid
@@ -90,28 +100,40 @@ export default function EmployeeCard({ rows, setRows, auth }) {
         />
       </Box>
 
-      <Dialog open={openForm} onClose={()=>setOpenForm(false)} fullWidth maxWidth="sm">
+      {/* Форма додавання/редагування */}
+      <Dialog open={openForm} onClose={() => setOpenForm(false)} fullWidth maxWidth="sm">
         <DialogTitle>{cur.id ? "Редагувати працівника" : "Додати працівника"}</DialogTitle>
-        <DialogContent sx={{ display:"flex", flexDirection:"column", gap:2, mt:1 }}>
-          <TextField label="Імʼя"  value={cur.name}
-            onChange={e=>setCur({ ...cur, name:e.target.value })}/>
-
-          <TextField label="Роль (admin / cashier / ...)"  value={cur.role}
-            onChange={e=>setCur({ ...cur, role:e.target.value })}/>
-
-          <TextField label="ID магазину" type="number" value={cur.storeId}
-            onChange={e=>setCur({ ...cur, storeId:e.target.value })}/>
+        <DialogContent sx={{
+          display: "flex", flexDirection: "column", gap: 2, mt: 1, overflow: "visible"
+        }}>
+          <TextField
+            label="Імʼя"
+            value={cur.name}
+            onChange={e => setCur({ ...cur, name: e.target.value })}
+          />
+          <TextField
+            label="Роль (admin / cashier / ...)"
+            value={cur.role}
+            onChange={e => setCur({ ...cur, role: e.target.value })}
+          />
+          <TextField
+            label="ID магазину"
+            type="number"
+            value={cur.storeId}
+            onChange={e => setCur({ ...cur, storeId: e.target.value })}
+          />
         </DialogContent>
         <DialogActions>
-          <Button onClick={()=>setOpenForm(false)}>Скасувати</Button>
+          <Button onClick={() => setOpenForm(false)}>Скасувати</Button>
           <Button variant="contained" onClick={handleSave}>Зберегти</Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openDel} onClose={()=>setOpenDel(false)}>
+      {/* Діалог видалення */}
+      <Dialog open={openDel} onClose={() => setOpenDel(false)}>
         <DialogTitle>Видалити працівника?</DialogTitle>
         <DialogActions>
-          <Button onClick={()=>setOpenDel(false)}>Ні</Button>
+          <Button onClick={() => setOpenDel(false)}>Ні</Button>
           <Button color="error" variant="contained" onClick={handleDelete}>Так</Button>
         </DialogActions>
       </Dialog>

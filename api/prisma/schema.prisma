@@ -9,10 +9,14 @@ datasource db {
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  email    String  @unique
-  password String
-  role     String  @default("user") // Наприклад: admin, cashier
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  role      String   @default("user")
+  storeId   Int?
+  firstName String?
+  lastName  String?
+  avatarUrl String?
 }
 
 model Store {

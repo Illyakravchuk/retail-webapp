@@ -1,78 +1,95 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import {
-  Card, CardHeader, IconButton, Divider,
-  Box, Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, TextField
+  Card, CardHeader, Divider, Box, IconButton,
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  TextField, Button
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
-import AddIcon from "@mui/icons-material/Add";
-import EditIcon from "@mui/icons-material/Edit";
+import AddIcon    from "@mui/icons-material/Add";
+import EditIcon   from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-export default function ProductCard({ rows, setRows, auth }) {
+export default function ProductCard({
+  rows, setRows,
+  auth,       
+  storeId,    
+  userRole,   
+  userStore   
+}) {
+
+  const canEditRow = (sid) =>
+    userRole === "admin" ||
+    (userRole === "cashier" && +sid === +userStore);
+
+  const canAdd = userRole === "admin" ||
+                 (userRole === "cashier" && +storeId === +userStore);
+
+  // Шаблон товару
+  const blank = {
+    id: null,
+    name: "",
+    price: "",
+    stock: "",
+    storeId: userRole === "cashier" ? userStore : (storeId || 1)
+  };
+
+  const [cur, setCur] = useState(blank);
   const [openForm, setOpenForm] = useState(false);
   const [openDel, setOpenDel] = useState(false);
-  const [cur, setCur] = useState({
-    id: null, name: "", price: "", stock: "", storeId: 1
-  });
 
-  const refetch = async () => {
-    const { data } = await axios.get("http://localhost:3000/products", auth);
+  useEffect(() => { refetch(); }, [storeId]);
+  async function refetch() {
+    const q = storeId ? { params: { storeId }, ...auth } : auth;
+    const { data } = await axios.get("http://localhost:3000/products", q);
     setRows(data);
-  };
+  }
 
-  const reset = () => setCur({ id: null, name: "", price: "", stock: "", storeId: 1 });
+  const reset = () => setCur(blank);
 
-  const handleSave = async () => {
-    const payload = {
+  async function handleSave() {
+    const body = {
       name: cur.name,
-      price: Number(cur.price),
-      stock: Number(cur.stock),
-      storeId: Number(cur.storeId)
+      price: +cur.price,
+      stock: +cur.stock,
+      storeId: +cur.storeId
     };
+    if (cur.id === null)
+      await axios.post("http://localhost:3000/products", body, auth);
+    else
+      await axios.put(`http://localhost:3000/products/${cur.id}`, body, auth);
 
-    try {
-      if (cur.id === null) {
-        await axios.post("http://localhost:3000/products", payload, auth);
-      } else {
-        await axios.put(`http://localhost:3000/products/${cur.id}`, payload, auth);
-      }
-      await refetch();
-      setOpenForm(false);
-      reset();
-    } catch (error) {
-      console.error("Save error:", error);
-    }
-  };
+    await refetch();
+    setOpenForm(false);
+    reset();
+  }
 
-  const handleDelete = async () => {
-    try {
-      await axios.delete(`http://localhost:3000/products/${cur.id}`, auth);
-      await refetch();
-      setOpenDel(false);
-      reset();
-    } catch (error) {
-      console.error("Delete error:", error);
-    }
-  };
+  async function handleDelete() {
+    await axios.delete(`http://localhost:3000/products/${cur.id}`, auth);
+    await refetch();
+    setOpenDel(false);
+    reset();
+  }
 
+  // Колонки DataGrid
   const columns = [
-    { field: "id", headerName: "ID", width: 70 },
-    { field: "name", headerName: "Назва", flex: 1 },
-    { field: "price", headerName: "Ціна", width: 100 },
-    { field: "stock", headerName: "К-сть", width: 90 },
+    { field: "id",      headerName: "ID",          width: 70 },
+    { field: "name",    headerName: "Назва",       flex: 1 },
+    { field: "price",   headerName: "Ціна",        width: 90 },
+    { field: "stock",   headerName: "К-сть",       width: 90 },
     { field: "storeId", headerName: "ID магазину", width: 120 },
     {
       field: "actions",
       headerName: "",
       width: 110,
-      renderCell: ({ row }) => (
+      renderCell: ({ row }) => canEditRow(row.storeId) && (
         <>
-          <IconButton size="small" onClick={() => { setCur(row); setOpenForm(true); }}>
+          <IconButton size="small"
+            onClick={() => { setCur(row); setOpenForm(true); }}>
             <EditIcon fontSize="small" />
           </IconButton>
-          <IconButton size="small" color="error" onClick={() => { setCur(row); setOpenDel(true); }}>
+          <IconButton size="small" color="error"
+            onClick={() => { setCur(row); setOpenDel(true); }}>
             <DeleteIcon fontSize="small" />
           </IconButton>
         </>
@@ -80,38 +97,59 @@ export default function ProductCard({ rows, setRows, auth }) {
     }
   ];
 
+  // UI
   return (
-    <Card sx={{
-      height: 420,
-      display: "flex",
-      flexDirection: "column",
-      boxShadow: 3
-    }}>
+    <Card sx={{ height: 420, display: "flex", flexDirection: "column", boxShadow: 3 }}>
       <CardHeader
         title="Товари"
-        action={
-          <IconButton onClick={() => { reset(); setOpenForm(true); }} sx={{ color: "#fff" }}>
+        action={canAdd && (
+          <IconButton sx={{ color: "#fff" }}
+            onClick={() => { reset(); setOpenForm(true); }}>
             <AddIcon />
           </IconButton>
-        }
+        )}
         sx={{ bgcolor: "success.main", color: "#fff" }}
       />
       <Divider />
       <Box sx={{ flexGrow: 1 }}>
-        <DataGrid rows={rows} columns={columns} density="compact" disableRowSelectionOnClick />
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          density="compact"
+          disableRowSelectionOnClick
+        />
       </Box>
 
-      <Dialog open={openForm} onClose={() => setOpenForm(false)}>
+      {/* Форма додавання/редагування */}
+      <Dialog open={openForm} onClose={() => setOpenForm(false)} fullWidth maxWidth="sm">
         <DialogTitle>{cur.id ? "Редагувати товар" : "Додати товар"}</DialogTitle>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-          <TextField label="Назва" value={cur.name}
-            onChange={e => setCur({ ...cur, name: e.target.value })} />
-          <TextField label="Ціна" type="number" value={cur.price}
-            onChange={e => setCur({ ...cur, price: e.target.value })} />
-          <TextField label="Кількість" type="number" value={cur.stock}
-            onChange={e => setCur({ ...cur, stock: e.target.value })} />
-          <TextField label="ID магазину" type="number" value={cur.storeId}
-            onChange={e => setCur({ ...cur, storeId: e.target.value })} />
+        <DialogContent sx={{
+          display: "flex", flexDirection: "column", gap: 2, mt: 1, overflow: "visible"
+        }}>
+          <TextField
+            label="Назва"
+            value={cur.name}
+            onChange={e => setCur({ ...cur, name: e.target.value })}
+          />
+          <TextField
+            label="Ціна"
+            type="number"
+            value={cur.price}
+            onChange={e => setCur({ ...cur, price: e.target.value })}
+          />
+          <TextField
+            label="Кількість"
+            type="number"
+            value={cur.stock}
+            onChange={e => setCur({ ...cur, stock: e.target.value })}
+          />
+          <TextField
+            label="ID магазину"
+            type="number"
+            value={cur.storeId}
+            disabled={userRole === "cashier"}
+            onChange={e => setCur({ ...cur, storeId: e.target.value })}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenForm(false)}>Скасувати</Button>
@@ -119,6 +157,7 @@ export default function ProductCard({ rows, setRows, auth }) {
         </DialogActions>
       </Dialog>
 
+      {/* Діалог видалення */}
       <Dialog open={openDel} onClose={() => setOpenDel(false)}>
         <DialogTitle>Видалити товар?</DialogTitle>
         <DialogActions>
