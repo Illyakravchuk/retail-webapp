@@ -48,8 +48,8 @@ app.get('/stores', authenticate, async (_req, res) => {
     const isAdmin = _req.user.role === 'admin';
     const stores  = await prisma.store.findMany(
       isAdmin
-        ? { include:{ employees:true, products:true, sales:true } }
-        : { select :{ id:true, name:true } }
+        ? { include: { employees: true, products: true, sales: true } }
+        : { select: { id: true, name: true, location: true } } 
     );
     res.json(stores);
   } catch (err) {

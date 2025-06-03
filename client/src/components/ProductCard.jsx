@@ -99,7 +99,7 @@ export default function ProductCard({
 
   // UI
   return (
-    <Card sx={{ height: 420, display: "flex", flexDirection: "column", boxShadow: 3 }}>
+    <Card sx={{ height: 550, display: "flex", flexDirection: "column", boxShadow: 3 }}>
       <CardHeader
         title="Товари"
         action={canAdd && (
@@ -115,6 +115,8 @@ export default function ProductCard({
         <DataGrid
           rows={rows}
           columns={columns}
+          pageSize={4}
+          rowsPerPageOptions={[4, 7, 9, 100]}
           density="compact"
           disableRowSelectionOnClick
         />

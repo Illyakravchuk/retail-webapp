@@ -73,7 +73,7 @@ export default function EmployeeCard({ rows, setRows, auth, storeId }) {
   // UI
   return (
     <Card sx={{
-      height: 420,
+      height: 550,
       display: "flex",
       flexDirection: "column",
       boxShadow: 3

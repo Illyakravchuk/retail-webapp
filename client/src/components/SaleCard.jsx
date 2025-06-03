@@ -121,7 +121,7 @@ export default function SaleCard({ rows, setRows, auth, storeId }) {
   );
 
   return (
-    <Card sx={{ height: 420, display: "flex", flexDirection: "column", boxShadow: 3 }}>
+    <Card sx={{ height: 550, display: "flex", flexDirection: "column", boxShadow: 3 }}>
       <CardHeader
         title="Продажі"
         action={
