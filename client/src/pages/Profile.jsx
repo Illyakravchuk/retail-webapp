@@ -50,7 +50,7 @@ export default function Profile() {
         setUser(user);
         const { data: allStores } = await axios.get("http://localhost:3000/stores", auth);
         setStores(allStores);
-        // Для admin — перший магазин активний, для інших — усі магазини
+        // Для admin - перший магазин активний, для інших - усі магазини
         if (user.role === "admin") setActiveId(allStores[0]?.id ?? null);
         else setActiveId(0);
       } catch (e) {
@@ -187,7 +187,7 @@ export default function Profile() {
           <Box mb={1} display="flex" alignItems="center">
             <Typography variant="subtitle1" fontWeight={600}>ПІБ:&nbsp;</Typography>
             <Typography variant="h6" sx={{ display: "inline", mr: 2 }}>
-              {(showLastName + " " + showFirstName).trim() || "—"}
+              {(showLastName + " " + showFirstName).trim() || "-"}
             </Typography>
             <Chip
               label={ROLE_UA[user.role] || user.role}
@@ -249,7 +249,7 @@ export default function Profile() {
             userStore={user.storeId}
           />
         </Grid>
-        {/* Інші картки — лише для адміна */}
+        {/* Інші картки - лише для адміна */}
         {user.role === "admin" && (
           <>
             <Grid item xs={12}>

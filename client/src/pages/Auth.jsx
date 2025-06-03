@@ -177,7 +177,7 @@ export default function Auth() {
                       required
                       className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
                     >
-                      <option value="">— Оберіть магазин —</option>
+                      <option value="">- Оберіть магазин -</option>
                       {stores.map((s) => (
                         <option key={s.id} value={s.id}>
                           {s.name} (ID&nbsp;{s.id})

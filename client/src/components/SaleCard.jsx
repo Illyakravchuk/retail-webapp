@@ -70,9 +70,9 @@ export default function SaleCard({ rows, setRows, auth, storeId }) {
     const product = row.product || {};
     return {
       ...row,
-      productName: product.name ?? "—",
+      productName: product.name ?? "-",
       unitPrice: typeof product.price === "number" ? product.price : null,
-      stock: product.stock ?? "—",
+      stock: product.stock ?? "-",
       total:
         typeof product.price === "number" && typeof row.quantity === "number"
           ? product.price * row.quantity

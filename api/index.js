@@ -362,7 +362,7 @@ app.post('/register', async (req, res) => {
   try {
     const createdUser = await prisma.user.create({ data });
 
-    // Якщо роль касир — одразу додаємо у employee
+    // Якщо роль касир - одразу додаємо у employee
     if (role === 'cashier') {
       await prisma.employee.create({
         data: {
